@@ -1,0 +1,2350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家风传承之模拟器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        neutral: '#1F2937',
+                        accent: '#F59E0B',
+                        danger: '#EF4444',
+                        'neutral-light': '#F3F4F6'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+            .animate-fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+            .animate-slide-up {
+                animation: slideUp 0.5s ease-out;
+            }
+            .animate-pulse-soft {
+                animation: pulseSoft 2s infinite;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translateY(20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            @keyframes pulseSoft {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.7; }
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- 欢迎界面 -->
+    <div id="welcome" class="min-h-screen flex flex-col items-center justify-center px-4 py-8 animate-fade-in">
+        <div class="text-center mb-8">
+            <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold text-primary mb-4 text-shadow"> 传承人生模拟器</h1>
+            <p class="text-[clamp(1rem,2vw,1.25rem)] text-neutral max-w-2xl mx-auto mb-8">在我们家族中有着一件神器，通过神器，你将体验虚拟人生的各个阶段，每一个选择都可能改变你的命运。准备好了吗？孩子！</p>
+        </div>
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden card-hover">
+            <img src="https://picsum.photos/seed/life/800/400" alt="虚拟人生旅程" class="w-full h-48 object-cover">
+            <div class="p-6">
+                <h2 class="text-xl font-bold text-neutral mb-3">开始你的虚拟人生旅程</h2>
+                <p class="text-gray-600 mb-6">做出选择，积累美德，看看你能达成什么样的成就。</p>
+                <button id="startButton" class="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    开始游戏
+                    <i class="fa fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏界面 -->
+    <div id="game" class="hidden min-h-screen flex flex-col">
+        <!-- 顶部状态栏 -->
+        <header class="bg-white shadow-md sticky top-0 z-50">
+            <div class="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl font-bold text-primary">人生模拟器</h1>
+                    <div class="hidden md:flex items-center space-x-6">
+                        <div class="flex items-center">
+                            <i class="fa fa-birthday-cake text-accent mr-2"></i>
+                            <span id="ageDisplay" class="font-medium">0岁1月</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fa fa-heart text-danger mr-2"></i>
+                            <span id="filialDisplay" class="font-medium">孝心: 50</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fa fa-tasks text-secondary mr-2"></i>
+                            <span id="eventProgress" class="font-medium">事件: 0/1</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button id="achievementBtn" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                        <i class="fa fa-trophy text-accent"></i>
+                        <span id="achievementCount" class="absolute -top-1 -right-1 bg-danger text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </button>
+                    <button id="pauseBtn" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                        <i class="fa fa-pause text-neutral"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主游戏区域 -->
+        <main class="flex-grow container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
+            <!-- 左侧游戏内容 -->
+            <div class="w-full md:w-2/3">
+                <!-- 事件卡片 -->
+                <div id="eventCard" class="bg-white rounded-2xl shadow-lg p-6 mb-8 animate-slide-up">
+                    <div class="flex items-start justify-between mb-4">
+                        <h2 id="eventTitle" class="text-2xl font-bold text-neutral">成长的烦恼</h2>
+                        <span id="eventAge" class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">童年</span>
+                    </div>
+                    <div class="relative mb-6">
+                        <img id="eventImage" src="https://picsum.photos/seed/childhood/800/400" alt="事件图片" class="w-full h-64 object-cover rounded-lg mb-4">
+                        <div id="eventDescription" class="text-gray-700 leading-relaxed">
+                            你遇到了一个小难题，需要做出选择。
+                        </div>
+                    </div>
+                    
+                    <div id="choicesContainer" class="space-y-3">
+                        <!-- 选择按钮将由JS动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 事件历史 -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                    <h3 class="text-xl font-bold text-neutral mb-4 flex items-center">
+                        <i class="fa fa-history text-primary mr-2"></i>
+                        人生历程
+                    </h3>
+                    <div id="eventHistory" class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                        <!-- 历史事件将由JS动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧信息面板 -->
+            <div class="w-full md:w-1/3 space-y-8">
+                <!-- 美德面板 -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-neutral mb-4 flex items-center">
+                        <i class="fa fa-star text-accent mr-2"></i>
+                        美德值
+                    </h3>
+                    <div id="virtuesContainer" class="space-y-4">
+                        <!-- 美德条将由JS动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 成就面板 -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-neutral mb-4 flex items-center">
+                        <i class="fa fa-trophy text-accent mr-2"></i>
+                        成就
+                    </h3>
+                    <div id="achievementsContainer" class="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-2">
+                        <!-- 成就将由JS动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 游戏控制 -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-neutral mb-4 flex items-center">
+                        <i class="fa fa-gamepad text-primary mr-2"></i>
+                        游戏控制
+                    </h3>
+                    <div class="space-y-3">
+                        <button id="startGameBtn" class="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                            开始游戏
+                        </button>
+                        <button id="settingsBtn" class="w-full bg-gray-100 hover:bg-gray-200 text-neutral font-semibold py-3 px-6 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                            <i class="fa fa-cog mr-2"></i>
+                            设置
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 结果弹窗 -->
+        <div id="resultContainer" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 animate-fade-in">
+                <h2 class="text-2xl font-bold text-primary mb-4">事件结果</h2>
+                <div id="resultDescription" class="text-gray-700 mb-6">
+                    你做出了选择，获得了相应的结果。
+                </div>
+                <div id="resultStats" class="space-y-2 mb-6">
+                    <!-- 结果统计将由JS动态生成 -->
+                </div>
+                <button id="continueBtn" class="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    继续人生
+                </button>
+            </div>
+        </div>
+
+        <!-- 游戏结束弹窗 -->
+        <div id="gameOverContainer" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 animate-fade-in">
+                <div class="text-center mb-6">
+                    <h2 class="text-3xl font-bold text-danger mb-2">人生结束</h2>
+                    <p class="text-gray-600">你度过了充实的一生</p>
+                    <div class="mt-4">
+                        <span id="finalAge" class="text-4xl font-bold text-primary">0</span>
+                        <span class="text-xl text-gray-600">岁</span>
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-bold text-neutral mb-3">美德总结</h3>
+                <div id="finalVirtues" class="space-y-2 mb-6">
+                    <!-- 最终美德将由JS动态生成 -->
+                </div>
+                
+                <h3 class="text-xl font-bold text-neutral mb-3">获得的成就</h3>
+                <div id="finalAchievements" class="space-y-2 mb-6 max-h-40 overflow-y-auto">
+                    <!-- 最终成就将由JS动态生成 -->
+                </div>
+                
+                <button id="restartButton" class="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    重新开始
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const gameController = new GameController();
+            
+            // 绑定欢迎界面的开始按钮
+            document.getElementById('startButton').addEventListener('click', () => {
+                document.getElementById('welcome').classList.add('hidden');
+                document.getElementById('game').classList.remove('hidden');
+                gameController.startGame();
+            });
+            
+            // 绑定游戏界面的开始游戏按钮
+            document.getElementById('startGameBtn').addEventListener('click', () => {
+                gameController.startGame();
+            });
+            
+            // 绑定重新开始按钮
+            document.getElementById('restartButton').addEventListener('click', () => {
+                gameController.resetGame();
+                document.getElementById('gameOverContainer').classList.add('hidden');
+                gameController.startGame();
+            });
+            
+            // 绑定继续按钮
+            document.getElementById('continueBtn').addEventListener('click', () => {
+                document.getElementById('resultContainer').classList.add('hidden');
+                gameController.nextEvent();
+            });
+            
+            // 绑定成就按钮
+            document.getElementById('achievementBtn').addEventListener('click', () => {
+                alert('功能开发中，敬请期待！');
+            });
+            
+            // 绑定暂停按钮
+            document.getElementById('pauseBtn').addEventListener('click', () => {
+                alert('功能开发中，敬请期待！');
+            });
+            
+            // 绑定设置按钮
+            document.getElementById('settingsBtn').addEventListener('click', () => {
+                alert('功能开发中，敬请期待！');
+            });
+        });
+
+        class GameController {
+            constructor() {
+                this.state = {
+                    gameOver: false,
+                    age: 0,
+                    month: 1,
+                    eventsLeft: 0,
+                    totalEvents: 0,
+                    filial: 50,
+                    virtues: {
+                        kindness: 0,    // 善良
+                        courage: 0,     // 勇气
+                        wisdom: 0,      // 智慧
+                        perseverance: 0,// 毅力
+                        responsibility: 0 // 责任
+                    },
+                    eventHistory: [],
+                    eventCounters: {},
+                    unlockedAchievements: new Set()
+                };
+                
+                this.achievements = [
+                    { id: 'earlyReader', name: '早期阅读者', description: '在5岁前选择阅读相关事件5次', condition: (state) => state.age < 5 && (state.eventCounters['read'] || 0) >= 5 },
+                    { id: 'kindHeart', name: '善良之心', description: '善良美德达到50点', condition: (state) => state.virtues.kindness >= 50 },
+                    { id: 'courageous', name: '勇敢无畏', description: '勇气美德达到50点', condition: (state) => state.virtues.courage >= 50 },
+                    { id: 'wiseOwl', name: '智慧之枭', description: '智慧美德达到50点', condition: (state) => state.virtues.wisdom >= 50 },
+                    { id: 'ironWill', name: '钢铁意志', description: '毅力美德达到50点', condition: (state) => state.virtues.perseverance >= 50 },
+                    { id: 'responsibleAdult', name: '负责任的人', description: '责任美德达到50点', condition: (state) => state.virtues.responsibility >= 50 },
+                    { id: 'balancedLife', name: '平衡人生', description: '所有美德达到30点', condition: (state) => Object.values(state.virtues).every(v => v >= 30) },
+                    { id: 'generousSoul', name: '慷慨灵魂', description: '在童年时期帮助他人10次', condition: (state) => state.age <= 12 && (state.eventCounters['help'] || 0) >= 10 },
+                    { id: 'bookWorm', name: '书虫', description: '阅读相关事件选择20次', condition: (state) => (state.eventCounters['read'] || 0) >= 20 },
+                    { id: 'sportsStar', name: '体育明星', description: '体育相关事件选择15次', condition: (state) => (state.eventCounters['sports'] || 0) >= 15 },
+                    { id: 'familyMan', name: '家庭至上', description: '孝心值保持在70以上直到成年', condition: (state) => state.age >= 18 && state.filial >= 70 },
+                    { id: 'selfMade', name: '白手起家', description: '在没有高智慧的情况下达到高责任和毅力', condition: (state) => state.virtues.wisdom < 40 && state.virtues.responsibility >= 60 && state.virtues.perseverance >= 60 },
+                    { id: 'renaissancePerson', name: '文艺复兴人', description: '在所有美德中获得至少40点', condition: (state) => Object.values(state.virtues).every(v => v >= 40) },
+                    { id: 'overcomer', name: '战胜困难者', description: '在逆境事件中做出正确选择10次', condition: (state) => (state.eventCounters['adversity'] || 0) >= 10 },
+                    { id: 'leader', name: '领袖', description: '在团队事件中担任领导角色15次', condition: (state) => (state.eventCounters['leader'] || 0) >= 15 },
+                    { id: 'philanthropist', name: '慈善家', description: '捐赠相关事件选择10次', condition: (state) => (state.eventCounters['donate'] || 0) >= 10 },
+                    { id: 'lifelongLearner', name: '终身学习者', description: '在成年后仍然选择学习相关事件10次', condition: (state) => state.age >= 18 && (state.eventCounters['learn'] || 0) >= 10 },
+                    { id: 'adventurer', name: '冒险家', description: '探索相关事件选择15次', condition: (state) => (state.eventCounters['explore'] || 0) >= 15 },
+                    { id: 'peacemaker', name: '和平使者', description: '解决冲突相关事件选择10次', condition: (state) => (state.eventCounters['peace'] || 0) >= 10 },
+                    { id: 'artisticSoul', name: '艺术灵魂', description: '艺术相关事件选择15次', condition: (state) => (state.eventCounters['art'] || 0) >= 15 },
+                    { id: 'techWhiz', name: '科技天才', description: '科技相关事件选择15次', condition: (state) => (state.eventCounters['tech'] || 0) >= 15 },
+                    { id: 'animalLover', name: '动物爱好者', description: '动物相关事件选择10次', condition: (state) => (state.eventCounters['animal'] || 0) >= 10 },
+                    { id: 'earlyAchiever', name: '少年有成', description: '在18岁前解锁5个成就', condition: (state) => state.age < 18 && state.unlockedAchievements.size >= 5 },
+                    { id: 'virtuous', name: '品德高尚', description: '所有美德达到60点', condition: (state) => Object.values(state.virtues).every(v => v >= 60) },
+                    { id: 'perfectionist', name: '完美主义者', description: '解锁所有成就', condition: (state) => state.unlockedAchievements.size === this.achievements.length },
+                    { id: 'longLife', name: '长寿者', description: '活到80岁以上', condition: (state) => state.age >= 80 }
+                ];
+                
+                // 定义各年龄段的事件池
+                this.eventPools = {
+                    childhood: this.generateChildhoodEvents(), // 童年事件
+                    adolescence: this.generateAdolescenceEvents(), // 青少年事件
+                    adulthood: this.generateAdulthoodEvents(), // 成年事件
+                    middleAge: this.generateMiddleAgeEvents(), // 中年事件
+                    oldAge: this.generateOldAgeEvents() // 老年事件
+                };
+            }
+            
+            startGame() {
+                // 重置游戏状态
+                this.state.gameOver = false;
+                this.state.age = 0;
+                this.state.month = 1;
+                this.state.eventsLeft = 1;
+                this.state.totalEvents = 1;
+                this.state.filial = 50;
+                
+                // 重置美德值
+                for (const virtue in this.state.virtues) {
+                    this.state.virtues[virtue] = 0;
+                }
+                
+                // 初始化事件历史
+                this.state.eventHistory = [];
+                this.state.eventCounters = {};
+                this.state.unlockedAchievements = new Set();
+                
+                // 更新UI
+                this.updateStatusUI();
+                this.updateVirtuesUI();
+                this.updateAchievementsUI();
+                this.showNewEvent();
+                
+                // 隐藏结果容器
+                document.getElementById('resultContainer').classList.add('hidden');
+                document.getElementById('gameOverContainer').classList.add('hidden');
+            }
+            
+            resetGame() {
+                // 重置游戏状态但不开始新游戏
+                this.state.gameOver = true;
+                this.state.age = 0;
+                this.state.month = 1;
+                this.state.eventsLeft = 0;
+                this.state.totalEvents = 0;
+                this.state.filial = 50;
+                
+                // 重置美德值
+                for (const virtue in this.state.virtues) {
+                    this.state.virtues[virtue] = 0;
+                }
+                
+                // 初始化事件历史
+                this.state.eventHistory = [];
+                this.state.eventCounters = {};
+                this.state.unlockedAchievements = new Set();
+                
+                // 更新UI
+                this.updateStatusUI();
+                this.updateVirtuesUI();
+                this.updateAchievementsUI();
+            }
+            
+            getCurrentStage() {
+                if (this.state.age < 13) return 'childhood';
+                if (this.state.age < 20) return 'adolescence';
+                if (this.state.age < 40) return 'adulthood';
+                if (this.state.age < 65) return 'middleAge';
+                return 'oldAge';
+            }
+            
+            getEventStageName(stage) {
+                const stageNames = {
+                    childhood: '童年',
+                    adolescence: '青少年',
+                    adulthood: '成年',
+                    middleAge: '中年',
+                    oldAge: '老年'
+                };
+                return stageNames[stage] || '未知';
+            }
+            
+            showNewEvent() {
+                if (this.state.gameOver) return;
+                
+                const currentStage = this.getCurrentStage();
+                const eventPool = this.eventPools[currentStage];
+                
+                // 随机选择一个事件
+                const randomEvent = eventPool[Math.floor(Math.random() * eventPool.length)];
+                this.currentEvent = randomEvent;
+                
+                // 更新UI
+                document.getElementById('eventTitle').textContent = randomEvent.title;
+                document.getElementById('eventDescription').textContent = randomEvent.description;
+                document.getElementById('eventAge').textContent = this.getEventStageName(currentStage);
+                document.getElementById('eventImage').src = randomEvent.imageUrl;
+                
+                // 清空并添加选择按钮
+                const choicesContainer = document.getElementById('choicesContainer');
+                choicesContainer.innerHTML = '';
+                
+                randomEvent.choices.forEach((choice, index) => {
+                    const button = document.createElement('button');
+                    button.className = 'w-full bg-neutral-light hover:bg-primary/10 text-neutral font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/50 text-left flex items-start';
+                    button.innerHTML = `
+                        <span class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3">${index + 1}</span>
+                        ${choice.text}
+                    `;
+                    
+                    button.addEventListener('click', () => this.handleChoice(index));
+                    choicesContainer.appendChild(button);
+                });
+                
+                // 更新UI状态
+                this.updateStatusUI();
+            }
+            
+            handleChoice(choiceIndex) {
+                const choice = this.currentEvent.choices[choiceIndex];
+                
+                // 更新美德值
+                for (const virtue in choice.effects.virtues) {
+                    if (this.state.virtues.hasOwnProperty(virtue)) {
+                        this.state.virtues[virtue] += choice.effects.virtues[virtue];
+                        // 确保美德值不低于0
+                        this.state.virtues[virtue] = Math.max(0, this.state.virtues[virtue]);
+                    }
+                }
+                
+                // 更新孝心值
+                this.state.filial += choice.effects.filial || 0;
+                // 确保孝心值在0-100之间
+                this.state.filial = Math.max(0, Math.min(100, this.state.filial));
+                
+                // 记录事件选择
+                this.state.eventHistory.push({
+                    title: this.currentEvent.title,
+                    choice: choice.text,
+                    age: this.state.age,
+                    month: this.state.month
+                });
+                
+                // 更新事件计数器
+                if (this.currentEvent.type) {
+                    this.state.eventCounters[this.currentEvent.type] = (this.state.eventCounters[this.currentEvent.type] || 0) + 1;
+                }
+                
+                // 检查成就解锁
+                this.checkAchievements();
+                
+                // 更新UI
+                this.updateStatusUI();
+                this.updateVirtuesUI();
+                this.updateEventHistoryUI();
+                this.updateAchievementsUI();
+                
+                // 显示结果
+                this.showResult(choice);
+                
+                // 减少事件计数
+                this.state.eventsLeft--;
+                
+                // 检查是否需要增加年龄
+                if (this.state.eventsLeft <= 0) {
+                    this.incrementAge();
+                }
+            }
+            
+            showResult(choice) {
+                document.getElementById('resultDescription').textContent = choice.result || '你做出了选择，生活继续。';
+                
+                const resultStats = document.getElementById('resultStats');
+                resultStats.innerHTML = '';
+                
+                // 显示美德变化
+                for (const virtue in choice.effects.virtues) {
+                    if (choice.effects.virtues[virtue] !== 0) {
+                        const virtueName = this.getVirtueName(virtue);
+                        const effect = choice.effects.virtues[virtue];
+                        const effectClass = effect > 0 ? 'text-green-600' : 'text-red-600';
+                        const effectSign = effect > 0 ? '+' : '';
+                        
+                        const statElement = document.createElement('div');
+                        statElement.className = 'flex justify-between items-center';
+                        statElement.innerHTML = `
+                            <span>${virtueName}</span>
+                            <span class="${effectClass} font-semibold">${effectSign}${effect}</span>
+                        `;
+                        resultStats.appendChild(statElement);
+                    }
+                }
+                
+                // 显示孝心变化
+                if (choice.effects.filial) {
+                    const effect = choice.effects.filial;
+                    const effectClass = effect > 0 ? 'text-green-600' : 'text-red-600';
+                    const effectSign = effect > 0 ? '+' : '';
+                    
+                    const statElement = document.createElement('div');
+                    statElement.className = 'flex justify-between items-center';
+                    statElement.innerHTML = `
+                        <span>孝心</span>
+                        <span class="${effectClass} font-semibold">${effectSign}${effect}</span>
+                    `;
+                    resultStats.appendChild(statElement);
+                }
+                
+                document.getElementById('resultContainer').classList.remove('hidden');
+            }
+            
+            nextEvent() {
+                if (this.state.gameOver) {
+                    this.showGameOver();
+                    return;
+                }
+                
+                this.showNewEvent();
+            }
+            
+            incrementAge() {
+                this.state.month++;
+                
+                if (this.state.month > 12) {
+                    this.state.month = 1;
+                    this.state.age++;
+                    
+                    // 每月事件数随年龄增长
+                    this.state.totalEvents = Math.max(1, Math.floor(this.state.age / 5) + 1);
+                    
+                    // 中年和老年有死亡概率
+                    if (this.state.age >= 65) {
+                        const deathProbability = (this.state.age - 65) * 0.02; // 65岁2%，每增加1岁增加2%
+                        if (Math.random() < deathProbability) {
+                            this.state.gameOver = true;
+                            this.showGameOver();
+                            return;
+                        }
+                    }
+                }
+                
+                this.state.eventsLeft = this.state.totalEvents;
+            }
+            
+            showGameOver() {
+                document.getElementById('finalAge').textContent = this.state.age;
+                
+                // 显示最终美德值
+                const finalVirtues = document.getElementById('finalVirtues');
+                finalVirtues.innerHTML = '';
+                
+                for (const virtue in this.state.virtues) {
+                    const virtueName = this.getVirtueName(virtue);
+                    const value = this.state.virtues[virtue];
+                    
+                    const virtueElement = document.createElement('div');
+                    virtueElement.className = 'flex justify-between items-center';
+                    virtueElement.innerHTML = `
+                        <span>${virtueName}</span>
+                        <span class="font-semibold">${value}</span>
+                    `;
+                    finalVirtues.appendChild(virtueElement);
+                }
+                
+                // 显示获得的成就
+                const finalAchievements = document.getElementById('finalAchievements');
+                finalAchievements.innerHTML = '';
+                
+                if (this.state.unlockedAchievements.size === 0) {
+                    const noAchievement = document.createElement('div');
+                    noAchievement.className = 'text-gray-500 italic';
+                    noAchievement.textContent = '没有解锁任何成就';
+                    finalAchievements.appendChild(noAchievement);
+                } else {
+                    this.achievements.forEach(achievement => {
+                        if (this.state.unlockedAchievements.has(achievement.id)) {
+                            const achievementElement = document.createElement('div');
+                            achievementElement.className = 'flex items-center p-2 bg-green-50 rounded-lg';
+                            achievementElement.innerHTML = `
+                                <i class="fa fa-trophy text-accent mr-2"></i>
+                                <div>
+                                    <div class="font-medium">${achievement.name}</div>
+                                    <div class="text-sm text-gray-600">${achievement.description}</div>
+                                </div>
+                            `;
+                            finalAchievements.appendChild(achievementElement);
+                        }
+                    });
+                }
+                
+                document.getElementById('gameOverContainer').classList.remove('hidden');
+            }
+            
+            checkAchievements() {
+                let newAchievements = false;
+                
+                this.achievements.forEach(achievement => {
+                    if (!this.state.unlockedAchievements.has(achievement.id) && achievement.condition(this.state)) {
+                        this.state.unlockedAchievements.add(achievement.id);
+                        newAchievements = true;
+                        
+                        // 显示成就解锁通知
+                        this.showAchievementNotification(achievement);
+                    }
+                });
+                
+                if (newAchievements) {
+                    this.updateAchievementsUI();
+                }
+            }
+            
+            showAchievementNotification(achievement) {
+                // 创建通知元素
+                const notification = document.createElement('div');
+                notification.className = 'fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 max-w-xs z-50 animate-fade-in';
+                notification.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="bg-accent/20 p-2 rounded-full mr-3">
+                            <i class="fa fa-trophy text-accent text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-neutral">成就解锁!</h4>
+                            <p class="text-gray-600">${achievement.name}</p>
+                            <p class="text-sm text-gray-500">${achievement.description}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // 添加到页面
+                document.body.appendChild(notification);
+                
+                // 3秒后自动移除
+                setTimeout(() => {
+                    notification.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 500);
+                }, 3000);
+            }
+            
+            updateStatusUI() {
+                document.getElementById('ageDisplay').textContent = `${this.state.age}岁${this.state.month}月`;
+                document.getElementById('filialDisplay').textContent = `孝心: ${this.state.filial}`;
+                document.getElementById('eventProgress').textContent = `事件: ${this.state.totalEvents - this.state.eventsLeft}/${this.state.totalEvents}`;
+                document.getElementById('achievementCount').textContent = this.state.unlockedAchievements.size;
+            }
+            
+            updateVirtuesUI() {
+                const virtuesContainer = document.getElementById('virtuesContainer');
+                virtuesContainer.innerHTML = '';
+                
+                for (const virtue in this.state.virtues) {
+                    const virtueName = this.getVirtueName(virtue);
+                    const value = this.state.virtues[virtue];
+                    const percentage = Math.min(100, Math.max(0, value));
+                    
+                    // 确定进度条颜色
+                    let progressColor = 'bg-blue-500';
+                    if (percentage >= 75) progressColor = 'bg-green-500';
+                    else if (percentage >= 50) progressColor = 'bg-yellow-500';
+                    else if (percentage >= 25) progressColor = 'bg-orange-500';
+                    else progressColor = 'bg-red-500';
+                    
+                    const virtueElement = document.createElement('div');
+                    virtueElement.className = 'space-y-2';
+                    virtueElement.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium">${virtueName}</span>
+                            <span class="font-semibold">${value}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="${progressColor} h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                    `;
+                    virtuesContainer.appendChild(virtueElement);
+                }
+            }
+            
+            updateEventHistoryUI() {
+                const eventHistory = document.getElementById('eventHistory');
+                eventHistory.innerHTML = '';
+                
+                // 只显示最近的5个事件
+                const recentEvents = this.state.eventHistory.slice(-5).reverse();
+                
+                if (recentEvents.length === 0) {
+                    const noEvent = document.createElement('div');
+                    noEvent.className = 'text-gray-500 italic text-center py-3';
+                    noEvent.textContent = '暂无事件记录';
+                    eventHistory.appendChild(noEvent);
+                    return;
+                }
+                
+                recentEvents.forEach(event => {
+                    const eventElement = document.createElement('div');
+                    eventElement.className = 'p-3 bg-neutral-light rounded-lg animate-fade-in';
+                    eventElement.innerHTML = `
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="font-medium">${event.title}</h4>
+                            <span class="text-xs text-gray-500">${event.age}岁${event.month}月</span>
+                        </div>
+                        <p class="text-sm text-gray-700">${event.choice}</p>
+                    `;
+                    eventHistory.appendChild(eventElement);
+                });
+            }
+            
+            updateAchievementsUI() {
+                const achievementsContainer = document.getElementById('achievementsContainer');
+                achievementsContainer.innerHTML = '';
+                
+                // 显示已解锁的成就和几个锁定的成就
+                const unlockedAchievements = Array.from(this.state.unlockedAchievements);
+                
+                // 如果没有解锁的成就，显示提示
+                if (unlockedAchievements.length === 0) {
+                    const noAchievement = document.createElement('div');
+                    noAchievement.className = 'text-gray-500 italic text-center py-3 col-span-2';
+                    noAchievement.textContent = '尚未解锁任何成就';
+                    achievementsContainer.appendChild(noAchievement);
+                } else {
+                    // 显示已解锁的成就
+                    unlockedAchievements.forEach(achievementId => {
+                        const achievement = this.achievements.find(a => a.id === achievementId);
+                        if (achievement) {
+                            const achievementElement = document.createElement('div');
+                            achievementElement.className = 'p-3 bg-green-50 rounded-lg border border-green-100 animate-fade-in';
+                            achievementElement.innerHTML = `
+                                <div class="text-center">
+                                    <div class="bg-accent/20 p-2 rounded-full mx-auto w-12 h-12 flex items-center justify-center mb-2">
+                                        <i class="fa fa-trophy text-accent"></i>
+                                    </div>
+                                    <h4 class="font-medium text-sm">${achievement.name}</h4>
+                                </div>
+                            `;
+                            achievementsContainer.appendChild(achievementElement);
+                        }
+                    });
+                }
+                
+                // 显示一些锁定的成就作为占位符
+                const lockedCount = Math.max(0, 6 - unlockedAchievements.length);
+                for (let i = 0; i < lockedCount; i++) {
+                    const lockedElement = document.createElement('div');
+                    lockedElement.className = 'p-3 bg-gray-50 rounded-lg border border-gray-100 animate-fade-in';
+                    lockedElement.innerHTML = `
+                        <div class="text-center">
+                            <div class="bg-gray-200 p-2 rounded-full mx-auto w-12 h-12 flex items-center justify-center mb-2">
+                                <i class="fa fa-lock text-gray-400"></i>
+                            </div>
+                            <h4 class="font-medium text-sm text-gray-400">未解锁</h4>
+                        </div>
+                    `;
+                    achievementsContainer.appendChild(lockedElement);
+                }
+            }
+            
+            getVirtueName(virtue) {
+                const virtueNames = {
+                    kindness: '善良',
+                    courage: '勇气',
+                    wisdom: '智慧',
+                    perseverance: '毅力',
+                    responsibility: '责任'
+                };
+                return virtueNames[virtue] || virtue;
+            }
+            
+            // 生成童年事件
+            generateChildhoodEvents() {
+                return [
+                    {
+                        title: "公园里的流浪猫",
+                        description: "你在公园玩耍时发现了一只受伤的流浪猫，它看起来很饿，需要帮助。",
+                        imageUrl: "https://picsum.photos/seed/cat/800/400",
+                        type: "animal",
+                        choices: [
+                            {
+                                text: "用自己的零花钱给它买食物，并联系动物救助站",
+                                effects: {
+                                    virtues: { kindness: 5, responsibility: 3 },
+                                    filial: -2 // 花钱可能让父母不高兴
+                                },
+                                result: "你帮助了流浪猫，它得到了妥善的照顾。你的善良和责任感得到了提升，但零花钱的减少让父母略有不满。"
+                            },
+                            {
+                                text: "只是抚摸它，然后离开",
+                                effects: {
+                                    virtues: { kindness: 1 }
+                                },
+                                result: "你给了流浪猫一点安慰，但没有进一步帮助它。"
+                            },
+                            {
+                                text: "因为害怕父母责骂而无视它",
+                                effects: {
+                                    virtues: { kindness: -2 }
+                                },
+                                result: "你选择了无视流浪猫，心里有些愧疚。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "同学被欺负",
+                        description: "你看到班上的一个同学正在被几个高年级学生欺负，他们抢走了他的午餐钱。",
+                        imageUrl: "https://picsum.photos/seed/bully/800/400",
+                        type: "help",
+                        choices: [
+                            {
+                                text: "勇敢地站出来制止他们",
+                                effects: {
+                                    virtues: { courage: 5, kindness: 3 },
+                                    filial: -1 // 可能会让父母担心
+                                },
+                                result: "你勇敢地制止了欺负行为，同学非常感激你。你的勇气和善良得到了提升。"
+                            },
+                            {
+                                text: "跑去告诉老师",
+                                effects: {
+                                    virtues: { responsibility: 4 },
+                                    filial: 1 // 老师可能会表扬你
+                                },
+                                result: "你及时告诉了老师，欺负行为被制止了。你的责任感得到了提升。"
+                            },
+                            {
+                                text: "因为害怕而假装没看见",
+                                effects: {
+                                    virtues: { courage: -2, kindness: -2 }
+                                },
+                                result: "你选择了逃避，心里感到有些不安。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "数学难题",
+                        description: "你在做数学作业时遇到了一道难题，尝试了很久都没有解出来。",
+                        imageUrl: "https://picsum.photos/seed/math/800/400",
+                        type: "learn",
+                        choices: [
+                            {
+                                text: "继续尝试，直到解出来为止",
+                                effects: {
+                                    virtues: { perseverance: 5, wisdom: 3 }
+                                },
+                                result: "经过不懈努力，你终于解出了难题。你的毅力和智慧得到了锻炼。"
+                            },
+                            {
+                                text: "向父母或老师请教",
+                                effects: {
+                                    virtues: { wisdom: 4 },
+                                    filial: 2 // 主动学习会让父母高兴
+                                },
+                                result: "在他人的帮助下，你很快理解了解题方法。你的智慧得到了提升。"
+                            },
+                            {
+                                text: "放弃，明天抄同学的作业",
+                                effects: {
+                                    virtues: { perseverance: -3, responsibility: -2 }
+                                },
+                                result: "你选择了放弃，这可能会影响你的学习进度。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "图书馆的发现",
+                        description: "你在图书馆发现了一本关于科学实验的有趣书籍，里面有很多神奇的实验。",
+                        imageUrl: "https://picsum.photos/seed/library/800/400",
+                        type: "read",
+                        choices: [
+                            {
+                                text: "借阅这本书，并尝试做一些实验",
+                                effects: {
+                                    virtues: { wisdom: 5, perseverance: 3 },
+                                    filial: 1 // 阅读有益的书籍会让父母高兴
+                                },
+                                result: "你从书中获得了很多知识，并通过实验加深了理解。你的智慧和毅力得到了提升。"
+                            },
+                            {
+                                text: "只借阅这本书，但不做实验",
+                                effects: {
+                                    virtues: { wisdom: 3 }
+                                },
+                                result: "你阅读了这本书，学到了很多新知识。"
+                            },
+                            {
+                                text: "放回书架，继续看漫画书",
+                                effects: {
+                                    virtues: { wisdom: 1 }
+                                },
+                                result: "你选择了更轻松的阅读方式，但收获相对较少。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "操场意外",
+                        description: "你在操场跑步时不小心撞倒了一位低年级的同学，他摔倒在地，膝盖擦伤了。",
+                        imageUrl: "https://picsum.photos/seed/accident/800/400",
+                        type: "responsibility",
+                        choices: [
+                            {
+                                text: "立刻扶起他，道歉并带他去医务室",
+                                effects: {
+                                    virtues: { responsibility: 5, kindness: 3 },
+                                    filial: 1 // 负责任的行为会让父母高兴
+                                },
+                                result: "你妥善处理了意外，低年级同学的伤口得到了及时处理。你的责任感和善良得到了提升。"
+                            },
+                            {
+                                text: "道歉后，找老师来处理",
+                                effects: {
+                                    virtues: { responsibility: 3 }
+                                },
+                                result: "你做了基本的处理，老师表扬了你的责任感。"
+                            },
+                            {
+                                text: "害怕被责怪，假装没看见就走了",
+                                effects: {
+                                    virtues: { responsibility: -5, kindness: -3 }
+                                },
+                                result: "你选择了逃避责任，心里感到非常愧疚。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "家庭作业",
+                        description: "今天的家庭作业很多，而且很难，你感到有些疲惫。",
+                        imageUrl: "https://picsum.photos/seed/homework/800/400",
+                        type: "learn",
+                        choices: [
+                            {
+                                text: "坚持完成所有作业，即使熬夜",
+                                effects: {
+                                    virtues: { perseverance: 5, responsibility: 4 },
+                                    filial: -1 // 熬夜会让父母担心
+                                },
+                                result: "你完成了所有作业，知识掌握得更牢固了。你的毅力和责任感得到了提升。"
+                            },
+                            {
+                                text: "完成重要的作业，其他的明天再说",
+                                effects: {
+                                    virtues: { responsibility: 3 },
+                                    filial: 1 // 合理安排时间会让父母满意
+                                },
+                                result: "你合理安排了时间，既完成了重要任务，又保证了休息。"
+                            },
+                            {
+                                text: "只完成简单的部分，难的就不做了",
+                                effects: {
+                                    virtues: { responsibility: -3, perseverance: -2 }
+                                },
+                                result: "你逃避了困难的任务，这可能会影响你的学习效果。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "公园探险",
+                        description: "你和朋友在公园里发现了一条从未走过的小路，小路通向一个神秘的地方。",
+                        imageUrl: "https://picsum.photos/seed/adventure/800/400",
+                        type: "explore",
+                        choices: [
+                            {
+                                text: "一起沿着小路探险",
+                                effects: {
+                                    virtues: { courage: 4, wisdom: 2 },
+                                    filial: -2 // 可能会让父母担心
+                                },
+                                result: "你们发现了一个美丽的小湖，度过了一段难忘的时光。你的勇气和智慧得到了锻炼。"
+                            },
+                            {
+                                text: "叫上大人一起去探险",
+                                effects: {
+                                    virtues: { responsibility: 3 }
+                                },
+                                result: "在大人的带领下，你们安全地探索了新区域。你的责任感得到了认可。"
+                            },
+                            {
+                                text: "觉得太危险，放弃探险",
+                                effects: {
+                                    virtues: { courage: -1 }
+                                },
+                                result: "你选择了安全，但也错过了一次有趣的经历。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "音乐课表演",
+                        description: "音乐课上，老师让每个同学上台表演一个节目，你非常紧张。",
+                        imageUrl: "https://picsum.photos/seed/music/800/400",
+                        type: "art",
+                        choices: [
+                            {
+                                text: "勇敢地走上台表演",
+                                effects: {
+                                    virtues: { courage: 5 },
+                                    filial: 1 // 勇敢表现会让父母高兴
+                                },
+                                result: "你克服了紧张情绪，表演很成功，赢得了同学们的掌声。你的勇气得到了极大提升。"
+                            },
+                            {
+                                text: "和同学一起表演",
+                                effects: {
+                                    virtues: { courage: 3 }
+                                },
+                                result: "和同学合作让你感到更安心，表演也很顺利。"
+                            },
+                            {
+                                text: "以生病为借口拒绝表演",
+                                effects: {
+                                    virtues: { courage: -2 }
+                                },
+                                result: "你暂时逃避了表演，但心里还是有些遗憾。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "班级选举",
+                        description: "班里要选举新的班干部，你被同学们提名作为候选人。",
+                        imageUrl: "https://picsum.photos/seed/election/800/400",
+                        type: "leader",
+                        choices: [
+                            {
+                                text: "积极参与竞选，争取当选",
+                                effects: {
+                                    virtues: { responsibility: 5, courage: 4 },
+                                    filial: 1 // 积极参与会让父母高兴
+                                },
+                                result: "你成功当选了班干部，开始学习如何承担责任和领导他人。"
+                            },
+                            {
+                                text: "参与竞选，但不强求结果",
+                                effects: {
+                                    virtues: { responsibility: 3, courage: 2 }
+                                },
+                                result: "无论结果如何，你都锻炼了自己的表达能力和心态。"
+                            },
+                            {
+                                text: "放弃竞选，觉得太麻烦",
+                                effects: {
+                                    virtues: { responsibility: -2 }
+                                },
+                                result: "你错过了一次锻炼自己的机会。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "宠物生病",
+                        description: "你养的宠物生病了，看起来很难受，需要去看兽医。",
+                        imageUrl: "https://picsum.photos/seed/pet/800/400",
+                        type: "animal",
+                        choices: [
+                            {
+                                text: "坚持每天照顾它，带它去看医生",
+                                effects: {
+                                    virtues: { responsibility: 5, kindness: 4 },
+                                    filial: -2 // 可能需要花钱
+                                },
+                                result: "在你的悉心照顾下，宠物很快恢复了健康。你的责任感和善良得到了体现。"
+                            },
+                            {
+                                text: "告诉父母，让他们处理",
+                                effects: {
+                                    virtues: { responsibility: 2 }
+                                },
+                                result: "父母帮助你照顾了宠物，问题得到了解决。"
+                            },
+                            {
+                                text: "觉得太麻烦，不想管了",
+                                effects: {
+                                    virtues: { responsibility: -5, kindness: -4 }
+                                },
+                                result: "你逃避了照顾宠物的责任，心里感到非常愧疚。"
+                            }
+                        ]
+                    }
+                ];
+            }
+            
+            // 生成青少年事件
+            generateAdolescenceEvents() {
+                return [
+                    {
+                        title: "考试作弊",
+                        description: "在一次重要的考试中，你发现同桌在作弊，老师没有发现。",
+                        imageUrl: "https://picsum.photos/seed/exam/800/400",
+                        type: "responsibility",
+                        choices: [
+                            {
+                                text: "向老师举报",
+                                effects: {
+                                    virtues: { responsibility: 5 },
+                                    filial: 1 // 诚实的行为会让父母高兴
+                                },
+                                result: "你坚持了原则，维护了考试的公平性。你的责任感得到了提升。"
+                            },
+                            {
+                                text: "暗示同桌不要作弊，但不举报",
+                                effects: {
+                                    virtues: { responsibility: 3 }
+                                },
+                                result: "你尝试阻止了不诚实的行为，但没有直接介入。"
+                            },
+                            {
+                                text: "装作没看见",
+                                effects: {
+                                    virtues: { responsibility: -2 }
+                                },
+                                result: "你选择了沉默，可能会让你感到内心不安。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "朋友邀请去网吧",
+                        description: "你的好朋友邀请你一起去网吧玩游戏，你知道学校禁止学生去网吧。",
+                        imageUrl: "https://picsum.photos/seed/internet/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "坚决拒绝，并劝朋友也不要去",
+                                effects: {
+                                    virtues: { responsibility: 5, courage: 3 },
+                                    filial: 2 // 遵守规定会让父母高兴
+                                },
+                                result: "你坚守了原则，并成功劝阻了朋友。你的责任感和勇气得到了提升。"
+                            },
+                            {
+                                text: "拒绝，但不劝朋友",
+                                effects: {
+                                    virtues: { responsibility: 3 }
+                                },
+                                result: "你做出了正确的选择，但没有帮助朋友。"
+                            },
+                            {
+                                text: "一起去，但告诉自己只玩一次",
+                                effects: {
+                                    virtues: { responsibility: -4, perseverance: -2 }
+                                },
+                                result: "你违反了规定，可能会陷入难以控制的局面。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "社团招新",
+                        description: "学校里的各个社团开始招新，你对多个社团都很感兴趣，但时间有限。",
+                        imageUrl: "https://picsum.photos/seed/club/800/400",
+                        type: "explore",
+                        choices: [
+                            {
+                                text: "加入一个社团，专注发展",
+                                effects: {
+                                    virtues: { perseverance: 4, responsibility: 3 }
+                                },
+                                result: "你在社团中深入学习，技能得到了很大提升。你的毅力和责任感得到了锻炼。"
+                            },
+                            {
+                                text: "加入多个社团，全面发展",
+                                effects: {
+                                    virtues: { wisdom: 5 },
+                                    filial: -1 // 可能会影响学业
+                                },
+                                result: "你接触了不同领域的知识，但可能会感到有些忙碌。"
+                            },
+                            {
+                                text: "一个社团也不加入，专注学习",
+                                effects: {
+                                    virtues: { wisdom: 3 },
+                                    filial: 1 // 专注学习会让父母高兴
+                                },
+                                result: "你的学习成绩有所提高，但错过了一些社交机会。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "家庭经济困难",
+                        description: "你的家庭遇到了经济困难，父母似乎压力很大。",
+                        imageUrl: "https://picsum.photos/seed/money/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "主动节省开支，帮父母分担压力",
+                                effects: {
+                                    virtues: { responsibility: 5, kindness: 4 },
+                                    filial: 5 // 懂事的行为会让父母感动
+                                },
+                                result: "你用实际行动帮助了家庭，父母为你的成熟感到骄傲。"
+                            },
+                            {
+                                text: "安慰父母，但不改变自己的生活习惯",
+                                effects: {
+                                    virtues: { kindness: 2 }
+                                },
+                                result: "你的安慰让父母感到温暖，但没有实际解决问题。"
+                            },
+                            {
+                                text: "抱怨家庭条件不好",
+                                effects: {
+                                    virtues: { kindness: -3, responsibility: -2 },
+                                    filial: -3 // 不懂事的行为会让父母伤心
+                                },
+                                result: "你的抱怨让家庭气氛更加紧张，你感到后悔。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "志愿活动",
+                        description: "学校组织了一次志愿活动，帮助社区里的孤寡老人。",
+                        imageUrl: "https://picsum.photos/seed/volunteer/800/400",
+                        type: "help",
+                        choices: [
+                            {
+                                text: "积极报名参加",
+                                effects: {
+                                    virtues: { kindness: 5, responsibility: 4 },
+                                    filial: 2 // 有爱心的行为会让父母高兴
+                                },
+                                result: "你在志愿活动中收获了很多，帮助了他人，也提升了自己。"
+                            },
+                            {
+                                text: "报名参加，但只是应付了事",
+                                effects: {
+                                    virtues: { kindness: 1, responsibility: -1 }
+                                },
+                                result: "你完成了任务，但没有真正投入，收获有限。"
+                            },
+                            {
+                                text: "找借口不参加",
+                                effects: {
+                                    virtues: { kindness: -2 }
+                                },
+                                result: "你错过了一次锻炼自己和帮助他人的机会。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "兴趣爱好与学业冲突",
+                        description: "你对绘画非常感兴趣，但最近学业压力很大，很难平衡两者。",
+                        imageUrl: "https://picsum.photos/seed/art/800/400",
+                        type: "art",
+                        choices: [
+                            {
+                                text: "每天坚持练习绘画，即使熬夜",
+                                effects: {
+                                    virtues: { perseverance: 5 },
+                                    filial: -2 // 可能影响学业
+                                },
+                                result: "你的绘画水平提高了很多，但学业成绩有所下滑。"
+                            },
+                            {
+                                text: "减少绘画时间，专注学业",
+                                effects: {
+                                    virtues: { responsibility: 4 },
+                                    filial: 2 // 重视学业会让父母高兴
+                                },
+                                result: "你的学业成绩提升了，但绘画技巧进步缓慢。"
+                            },
+                            {
+                                text: "合理安排时间，两者兼顾",
+                                effects: {
+                                    virtues: { wisdom: 5, perseverance: 3 },
+                                    filial: 1 // 合理安排会让父母满意
+                                },
+                                result: "你成功地平衡了兴趣和学业，两者都取得了进步。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "同学矛盾",
+                        description: "你和一位同学发生了矛盾，关系变得很紧张。",
+                        imageUrl: "https://picsum.photos/seed/conflict/800/400",
+                        type: "peace",
+                        choices: [
+                            {
+                                text: "主动沟通，化解矛盾",
+                                effects: {
+                                    virtues: { kindness: 4, wisdom: 3 },
+                                    filial: 1 // 善于处理人际关系会让父母高兴
+                                },
+                                result: "你成功地化解了矛盾，和同学的关系更加融洽。"
+                            },
+                            {
+                                text: "等待对方主动和解",
+                                effects: {
+                                    virtues: { kindness: 1 }
+                                },
+                                result: "矛盾没有进一步恶化，但也没有得到解决。"
+                            },
+                            {
+                                text: "继续冷战，甚至扩大矛盾",
+                                effects: {
+                                    virtues: { kindness: -3, responsibility: -2 }
+                                },
+                                result: "矛盾越来越深，你感到很烦恼。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "比赛失利",
+                        description: "你参加了一场重要的比赛，但结果并不理想。",
+                        imageUrl: "https://picsum.photos/seed/fail/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "分析原因，继续努力",
+                                effects: {
+                                    virtues: { perseverance: 5, wisdom: 4 }
+                                },
+                                result: "你从失败中吸取了教训，变得更加成熟。"
+                            },
+                            {
+                                text: "感到沮丧，但很快恢复",
+                                effects: {
+                                    virtues: { perseverance: 2 }
+                                },
+                                result: "你很快调整了心态，但没有深入反思。"
+                            },
+                            {
+                                text: "一蹶不振，放弃比赛",
+                                effects: {
+                                    virtues: { perseverance: -5 }
+                                },
+                                result: "你失去了继续尝试的勇气，错过了成长的机会。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "兼职工作",
+                        description: "你看到一个兼职工作的机会，想赚取一些零花钱，但担心影响学习。",
+                        imageUrl: "https://picsum.photos/seed/parttime/800/400",
+                        type: "responsibility",
+                        choices: [
+                            {
+                                text: "接受兼职，合理安排时间",
+                                effects: {
+                                    virtues: { responsibility: 5, perseverance: 4 },
+                                    filial: 1 // 独立的行为会让父母高兴
+                                },
+                                result: "你学会了管理时间，也体验到了工作的辛苦。"
+                            },
+                            {
+                                text: "接受兼职，但不考虑学习",
+                                effects: {
+                                    virtues: { perseverance: 3 },
+                                    filial: -2 // 可能影响学业
+                                },
+                                result: "你的零花钱增加了，但学习成绩有所下降。"
+                            },
+                            {
+                                text: "拒绝兼职，专注学习",
+                                effects: {
+                                    virtues: { wisdom: 3 },
+                                    filial: 2 // 专注学业会让父母高兴
+                                },
+                                result: "你的学习成绩保持良好，但缺乏社会实践经验。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "网络谣言",
+                        description: "你在网上看到一条关于同学的谣言，很多人都在转发。",
+                        imageUrl: "https://picsum.photos/seed/rumor/800/400",
+                        type: "responsibility",
+                        choices: [
+                            {
+                                text: "不转发，并向老师报告",
+                                effects: {
+                                    virtues: { responsibility: 5, kindness: 3 },
+                                    filial: 1 // 正确处理问题会让父母高兴
+                                },
+                                result: "你阻止了谣言的传播，保护了同学的名誉。"
+                            },
+                            {
+                                text: "不转发，但也不采取行动",
+                                effects: {
+                                    virtues: { responsibility: 1 }
+                                },
+                                result: "你没有参与传播谣言，但也没有帮助解决问题。"
+                            },
+                            {
+                                text: "跟风转发",
+                                effects: {
+                                    virtues: { responsibility: -3, kindness: -2 }
+                                },
+                                result: "你成为了谣言传播的一部分，可能会伤害到同学。"
+                            }
+                        ]
+                    }
+                ];
+            }
+            
+            // 生成成年事件
+            generateAdulthoodEvents() {
+                return [
+                    {
+                        title: "工作压力",
+                        description: "你最近工作压力很大，经常需要加班，感到身心疲惫。",
+                        imageUrl: "https://picsum.photos/seed/work/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "坚持努力，争取早日完成任务",
+                                effects: {
+                                    virtues: { perseverance: 5, responsibility: 4 },
+                                    filial: -1 // 可能忽略家庭
+                                },
+                                result: "你的努力得到了认可，工作取得了进展。"
+                            },
+                            {
+                                text: "寻求同事和上级的帮助",
+                                effects: {
+                                    virtues: { wisdom: 4, responsibility: 3 }
+                                },
+                                result: "在他人的帮助下，你更高效地完成了工作，也学到了新的技能。"
+                            },
+                            {
+                                text: "逃避工作，拖延时间",
+                                effects: {
+                                    virtues: { perseverance: -4, responsibility: -5 }
+                                },
+                                result: "工作堆积如山，你的压力越来越大，甚至可能面临失业的风险。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "职业选择",
+                        description: "你面临一个重要的职业选择：留在当前稳定的工作岗位，还是跳槽到一个更有挑战性但风险更高的新公司。",
+                        imageUrl: "https://picsum.photos/seed/career/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "跳槽到新公司，追求更高的发展",
+                                effects: {
+                                    virtues: { courage: 5, wisdom: 4 },
+                                    filial: -1 // 可能带来经济压力
+                                },
+                                result: "你勇敢地迈出了一步，虽然面临挑战，但获得了更多的成长机会。"
+                            },
+                            {
+                                text: "留在原公司，稳步发展",
+                                effects: {
+                                    virtues: { perseverance: 3 }
+                                },
+                                result: "你选择了稳定，但可能错过了一些发展机会。"
+                            },
+                            {
+                                text: "暂时不做决定，观望一段时间",
+                                effects: {
+                                    virtues: { wisdom: 2 }
+                                },
+                                result: "你争取到了更多思考的时间，但也可能让机会溜走。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "恋爱关系",
+                        description: "你和伴侣之间出现了一些矛盾，关系变得有些紧张。",
+                        imageUrl: "https://picsum.photos/seed/love/800/400",
+                        type: "peace",
+                        choices: [
+                            {
+                                text: "主动沟通，解决问题",
+                                effects: {
+                                    virtues: { kindness: 5, wisdom: 4 },
+                                    filial: 1 // 处理好感情问题会让父母放心
+                                },
+                                result: "你们通过沟通加深了理解，关系更加稳固。"
+                            },
+                            {
+                                text: "暂时回避矛盾，等待时间解决",
+                                effects: {
+                                    virtues: { wisdom: 2 }
+                                },
+                                result: "矛盾没有激化，但问题仍然存在。"
+                            },
+                            {
+                                text: "争吵，甚至考虑分手",
+                                effects: {
+                                    virtues: { kindness: -3, responsibility: -2 }
+                                },
+                                result: "关系进一步恶化，你感到很痛苦。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "父母健康问题",
+                        description: "你的父母其中一方身体出现了问题，需要照顾。",
+                        imageUrl: "https://picsum.photos/seed/parent/800/400",
+                        type: "help",
+                        choices: [
+                            {
+                                text: "放下工作，全心全意照顾父母",
+                                effects: {
+                                    virtues: { responsibility: 5, kindness: 5 },
+                                    filial: 10 // 孝顺的行为会让父母欣慰
+                                },
+                                result: "你用行动表达了对父母的爱，他们的病情得到了更好的照顾。"
+                            },
+                            {
+                                text: "请护工照顾，自己抽空看望",
+                                effects: {
+                                    virtues: { responsibility: 3, kindness: 3 },
+                                    filial: 5 // 尽力而为会让父母理解
+                                },
+                                result: "父母得到了基本的照顾，但你感到有些愧疚没有亲自照顾。"
+                            },
+                            {
+                                text: "以工作为由，很少关心",
+                                effects: {
+                                    virtues: { responsibility: -5, kindness: -5 },
+                                    filial: -10 // 不孝顺的行为会让父母伤心
+                                },
+                                result: "父母感到被冷落，你们的关系变得疏远。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "朋友求助",
+                        description: "你的好朋友遇到了经济困难，向你借钱。",
+                        imageUrl: "https://picsum.photos/seed/friend/800/400",
+                        type: "help",
+                        choices: [
+                            {
+                                text: "尽力帮助，即使自己也有压力",
+                                effects: {
+                                    virtues: { kindness: 5, responsibility: 3 },
+                                    filial: -2 // 可能影响家庭经济
+                                },
+                                result: "你帮助了朋友，他非常感激你。你们的友谊更加深厚。"
+                            },
+                            {
+                                text: "根据自己的能力适当帮助",
+                                effects: {
+                                    virtues: { kindness: 3, wisdom: 4 }
+                                },
+                                result: "你在帮助朋友的同时，也照顾到了自己的情况。"
+                            },
+                            {
+                                text: "拒绝帮助，担心无法收回",
+                                effects: {
+                                    virtues: { kindness: -2 }
+                                },
+                                result: "你保护了自己的经济利益，但朋友可能会感到失望。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "继续学习",
+                        description: "你有机会参加一个专业培训课程，但需要花费大量的时间和金钱。",
+                        imageUrl: "https://picsum.photos/seed/study/800/400",
+                        type: "learn",
+                        choices: [
+                            {
+                                text: "参加培训，提升自己",
+                                effects: {
+                                    virtues: { wisdom: 5, perseverance: 4 },
+                                    filial: -1 // 可能忽略家庭
+                                },
+                                result: "你的专业技能得到了提升，为未来的职业发展打下了基础。"
+                            },
+                            {
+                                text: "自学相关知识",
+                                effects: {
+                                    virtues: { wisdom: 3, perseverance: 3 }
+                                },
+                                result: "你通过自学获得了一些知识，但进度较慢。"
+                            },
+                            {
+                                text: "放弃学习，专注工作",
+                                effects: {
+                                    virtues: { wisdom: -1 }
+                                },
+                                result: "你的工作暂时没有受到影响，但长期来看可能会落后于竞争对手。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "社区问题",
+                        description: "你所在的社区面临一个环境问题，需要居民共同努力解决。",
+                        imageUrl: "https://picsum.photos/seed/community/800/400",
+                        type: "responsibility",
+                        choices: [
+                            {
+                                text: "积极参与，组织居民解决问题",
+                                effects: {
+                                    virtues: { responsibility: 5, kindness: 4 },
+                                    filial: 1 // 有责任感的行为会让父母骄傲
+                                },
+                                result: "在你的努力下，社区环境得到了改善，居民们对你表示感谢。"
+                            },
+                            {
+                                text: "参与但不主动，听从安排",
+                                effects: {
+                                    virtues: { responsibility: 3 }
+                                },
+                                result: "你为解决问题做出了贡献，但没有发挥领导作用。"
+                            },
+                            {
+                                text: "不参与，认为与自己无关",
+                                effects: {
+                                    virtues: { responsibility: -2 }
+                                },
+                                result: "问题没有得到及时解决，社区环境继续恶化。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "投资机会",
+                        description: "你遇到一个看似不错的投资机会，但风险也很高。",
+                        imageUrl: "https://picsum.photos/seed/investment/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "深入研究后，谨慎投资",
+                                effects: {
+                                    virtues: { wisdom: 5, courage: 4 },
+                                    filial: -1 // 可能有经济风险
+                                },
+                                result: "你做出了明智的投资决策，获得了不错的回报。"
+                            },
+                            {
+                                text: "听取朋友建议，部分投资",
+                                effects: {
+                                    virtues: { wisdom: 3, courage: 2 }
+                                },
+                                result: "你的投资有一定收益，但没有最大化。"
+                            },
+                            {
+                                text: "拒绝投资，认为风险太大",
+                                effects: {
+                                    virtues: { wisdom: 1 }
+                                },
+                                result: "你避免了潜在的风险，但也错过了可能的收益。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "工作与家庭的平衡",
+                        description: "你的工作越来越忙，很少有时间陪伴家人。",
+                        imageUrl: "https://picsum.photos/seed/balance/800/400",
+                        type: "responsibility",
+                        choices: [
+                            {
+                                text: "调整工作节奏，多花时间陪家人",
+                                effects: {
+                                    virtues: { responsibility: 5, kindness: 4 },
+                                    filial: 5 // 重视家庭会让父母高兴
+                                },
+                                result: "你和家人的关系更加亲密，但工作进度可能会受到一定影响。"
+                            },
+                            {
+                                text: "保持现状，认为事业更重要",
+                                effects: {
+                                    virtues: { perseverance: 3 },
+                                    filial: -2 // 忽略家庭会让父母担心
+                                },
+                                result: "你的事业取得了进展，但家庭关系变得有些疏远。"
+                            },
+                            {
+                                text: "减少工作和家庭的时间，增加个人娱乐",
+                                effects: {
+                                    virtues: { responsibility: -3, kindness: -2 }
+                                },
+                                result: "你暂时获得了更多的个人乐趣，但工作和家庭都受到了负面影响。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "健康问题",
+                        description: "你最近感觉身体不舒服，但工作很忙，没有时间去检查。",
+                        imageUrl: "https://picsum.photos/seed/health/800/400",
+                        type: "responsibility",
+                        choices: [
+                            {
+                                text: "立即去医院检查，重视健康",
+                                effects: {
+                                    virtues: { responsibility: 5 },
+                                    filial: 3 // 关心自己会让父母放心
+                                },
+                                result: "你及时发现并治疗了健康问题，避免了病情恶化。"
+                            },
+                            {
+                                text: "自己买药吃，继续工作",
+                                effects: {
+                                    virtues: { perseverance: 3 },
+                                    filial: -1 // 可能让父母担心
+                                },
+                                result: "你的症状暂时得到缓解，但没有彻底解决问题。"
+                            },
+                            {
+                                text: "忽略症状，继续工作",
+                                effects: {
+                                    virtues: { responsibility: -4 }
+                                },
+                                result: "你的健康状况恶化，不得不请假休息，影响了工作和生活。"
+                            }
+                        ]
+                    }
+                ];
+            }
+            
+            // 生成中年事件
+            generateMiddleAgeEvents() {
+                return [
+                    {
+                        title: "职业瓶颈",
+                        description: "你在工作中遇到了瓶颈，晋升机会渺茫，感到有些迷茫。",
+                        imageUrl: "https://picsum.photos/seed/bottleneck/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "寻求职业转型，开拓新领域",
+                                effects: {
+                                    virtues: { courage: 5, wisdom: 4 },
+                                    filial: -2 // 可能带来经济压力
+                                },
+                                result: "你勇敢地尝试了新领域，虽然面临挑战，但找到了新的发展方向。"
+                            },
+                            {
+                                text: "提升专业技能，争取突破",
+                                effects: {
+                                    virtues: { perseverance: 5, wisdom: 4 }
+                                },
+                                result: "你的专业技能得到了提升，为未来的发展打下了基础。"
+                            },
+                            {
+                                text: "接受现状，平稳度过",
+                                effects: {
+                                    virtues: { perseverance: 2 }
+                                },
+                                result: "你选择了稳定，但可能会感到有些遗憾。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "子女教育",
+                        description: "你的子女在学习上遇到了困难，需要你投入更多的时间和精力。",
+                        imageUrl: "https://picsum.photos/seed/education/800/400",
+                        type: "responsibility",
+                        choices: [
+                            {
+                                text: "亲自辅导，关注子女成长",
+                                effects: {
+                                    virtues: { responsibility: 5, kindness: 4 },
+                                    filial: 5 // 关心子女会让父母欣慰
+                                },
+                                result: "你和子女的关系更加亲密，他们的学习也有了进步。"
+                            },
+                            {
+                                text: "请家教辅导，自己减少参与",
+                                effects: {
+                                    virtues: { responsibility: 3 }
+                                },
+                                result: "子女的学习得到了帮助，但你和他们的交流减少了。"
+                            },
+                            {
+                                text: "认为孩子应该独立，少加干涉",
+                                effects: {
+                                    virtues: { responsibility: -2 }
+                                },
+                                result: "子女感到被冷落，可能会影响他们的成长。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "父母年迈",
+                        description: "你的父母年事已高，需要更多的照顾和关注。",
+                        imageUrl: "https://picsum.photos/seed/elderly/800/400",
+                        type: "help",
+                        choices: [
+                            {
+                                text: "接父母一起生活，亲自照顾",
+                                effects: {
+                                    virtues: { responsibility: 5, kindness: 5 },
+                                    filial: 10 // 孝顺的行为会让父母欣慰
+                                },
+                                result: "你为父母提供了舒适的生活环境，他们感到很幸福。"
+                            },
+                            {
+                                text: "安排父母住在养老院，定期探望",
+                                effects: {
+                                    virtues: { responsibility: 3, kindness: 3 },
+                                    filial: 5 // 尽力而为会让父母理解
+                                },
+                                result: "父母得到了专业的照顾，但可能会感到有些孤独。"
+                            },
+                            {
+                                text: "以工作为由，很少看望父母",
+                                effects: {
+                                    virtues: { responsibility: -5, kindness: -5 },
+                                    filial: -10 // 不孝顺的行为会让父母伤心
+                                },
+                                result: "父母感到被忽视，你们的关系变得疏远。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "健康危机",
+                        description: "你被诊断出一种慢性疾病，需要长期治疗和生活方式的改变。",
+                        imageUrl: "https://picsum.photos/seed/crisis/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "积极治疗，调整生活习惯",
+                                effects: {
+                                    virtues: { perseverance: 5, responsibility: 4 },
+                                    filial: 5 // 重视健康会让家人放心
+                                },
+                                result: "你的病情得到了控制，生活质量有所提高。"
+                            },
+                            {
+                                text: "按照医生建议治疗，但不改变生活习惯",
+                                effects: {
+                                    virtues: { perseverance: 3 }
+                                },
+                                result: "你的病情稳定，但没有明显改善。"
+                            },
+                            {
+                                text: "忽视疾病，继续以前的生活方式",
+                                effects: {
+                                    virtues: { responsibility: -5 }
+                                },
+                                result: "你的病情恶化，生活质量下降，甚至可能影响工作和家庭。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "经济压力",
+                        description: "家庭开支增加，经济压力变大，你需要做出一些调整。",
+                        imageUrl: "https://picsum.photos/seed/finance/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "努力工作，争取加薪或兼职",
+                                effects: {
+                                    virtues: { perseverance: 5, responsibility: 4 },
+                                    filial: -2 // 可能忽略家庭
+                                },
+                                result: "你的收入增加了，但可能会感到更加疲惫。"
+                            },
+                            {
+                                text: "减少不必要的开支，节俭生活",
+                                effects: {
+                                    virtues: { wisdom: 4, responsibility: 3 }
+                                },
+                                result: "你学会了合理理财，经济压力得到缓解。"
+                            },
+                            {
+                                text: "维持现状，不做改变",
+                                effects: {
+                                    virtues: { responsibility: -3 }
+                                },
+                                result: "经济压力持续增加，可能会影响家庭和谐。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "婚姻危机",
+                        description: "你和配偶之间的关系变得冷淡，缺乏沟通和理解。",
+                        imageUrl: "https://picsum.photos/seed/marriage/800/400",
+                        type: "peace",
+                        choices: [
+                            {
+                                text: "主动沟通，寻求婚姻咨询",
+                                effects: {
+                                    virtues: { kindness: 5, wisdom: 4 },
+                                    filial: 3 // 维护家庭和谐会让父母放心
+                                },
+                                result: "你们重新建立了沟通，关系得到改善。"
+                            },
+                            {
+                                text: "尝试改善关系，但不寻求专业帮助",
+                                effects: {
+                                    virtues: { kindness: 3, wisdom: 2 }
+                                },
+                                result: "关系略有改善，但问题没有彻底解决。"
+                            },
+                            {
+                                text: "忽视问题，继续维持现状",
+                                effects: {
+                                    virtues: { kindness: -2 }
+                                },
+                                result: "关系继续恶化，你们都感到痛苦。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "朋友疏远",
+                        description: "你和一些多年的朋友联系越来越少，关系逐渐疏远。",
+                        imageUrl: "https://picsum.photos/seed/distant/800/400",
+                        type: "peace",
+                        choices: [
+                            {
+                                text: "主动联系朋友，组织聚会",
+                                effects: {
+                                    virtues: { kindness: 5 },
+                                    filial: 1 // 重视友情会让父母觉得你社交能力强
+                                },
+                                result: "你和朋友重新建立了联系，友谊得到了巩固。"
+                            },
+                            {
+                                text: "偶尔联系，但不刻意维护",
+                                effects: {
+                                    virtues: { kindness: 2 }
+                                },
+                                result: "关系没有进一步恶化，但也没有恢复到以前的状态。"
+                            },
+                            {
+                                text: "顺其自然，认为这是人生必经阶段",
+                                effects: {
+                                    virtues: { kindness: -1 }
+                                },
+                                result: "你和朋友的关系越来越淡，可能会感到孤独。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "社会责任感",
+                        description: "你意识到自己有能力为社会做一些贡献，决定采取行动。",
+                        imageUrl: "https://picsum.photos/seed/society/800/400",
+                        type: "responsibility",
+                        choices: [
+                            {
+                                text: "参与公益活动，捐款捐物",
+                                effects: {
+                                    virtues: { responsibility: 5, kindness: 4 },
+                                    filial: 2 // 有社会责任感会让父母骄傲
+                                },
+                                result: "你为社会做出了贡献，感到很有成就感。"
+                            },
+                            {
+                                text: "关注社会问题，但只在网上发声",
+                                effects: {
+                                    virtues: { responsibility: 2 }
+                                },
+                                result: "你表达了自己的观点，但没有实际行动。"
+                            },
+                            {
+                                text: "认为这与自己无关，专注个人生活",
+                                effects: {
+                                    virtues: { responsibility: -2 }
+                                },
+                                result: "你过上了平静的生活，但可能会感到缺乏意义。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "退休规划",
+                        description: "你开始考虑退休后的生活，需要做出一些规划。",
+                        imageUrl: "https://picsum.photos/seed/retirement/800/400",
+                        type: "responsibility",
+                        choices: [
+                            {
+                                text: "制定详细的退休计划，包括财务和生活安排",
+                                effects: {
+                                    virtues: { wisdom: 5, responsibility: 4 }
+                                },
+                                result: "你为退休生活做好了充分准备，感到安心。"
+                            },
+                            {
+                                text: "开始储蓄，但没有具体计划",
+                                effects: {
+                                    virtues: { responsibility: 3 }
+                                },
+                                result: "你为退休存了一些钱，但没有明确的目标。"
+                            },
+                            {
+                                text: "不考虑退休，认为还早",
+                                effects: {
+                                    virtues: { responsibility: -2 }
+                                },
+                                result: "时间过得很快，当你退休时可能会面临经济压力。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "人生反思",
+                        description: "你开始反思自己的人生，思考是否过得充实，是否实现了自己的目标。",
+                        imageUrl: "https://picsum.photos/seed/reflection/800/400",
+                        type: "wisdom",
+                        choices: [
+                            {
+                                text: "调整生活方式，追求自己真正想要的东西",
+                                effects: {
+                                    virtues: { wisdom: 5, courage: 4 },
+                                    filial: -1 // 可能需要做出一些改变
+                                },
+                                result: "你重新找到了生活的意义，感到更加满足。"
+                            },
+                            {
+                                text: "保持现状，但更加珍惜现在的生活",
+                                effects: {
+                                    virtues: { wisdom: 3 }
+                                },
+                                result: "你学会了感恩，生活质量有所提高。"
+                            },
+                            {
+                                text: "感到沮丧，认为人生已经没有机会改变",
+                                effects: {
+                                    virtues: { courage: -3, perseverance: -2 }
+                                },
+                                result: "你陷入了消极情绪，生活变得乏味。"
+                            }
+                        ]
+                    }
+                ];
+            }
+            
+            // 生成老年事件
+            generateOldAgeEvents() {
+                return [
+                    {
+                        title: "健康衰退",
+                        description: "随着年龄的增长，你的身体机能逐渐衰退，行动变得不便。",
+                        imageUrl: "https://picsum.photos/seed/oldage/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "坚持锻炼，保持积极心态",
+                                effects: {
+                                    virtues: { perseverance: 5 },
+                                    filial: 3 // 积极面对会让子女放心
+                                },
+                                result: "你的身体状况保持得不错，生活质量较高。"
+                            },
+                            {
+                                text: "接受现状，减少活动",
+                                effects: {
+                                    virtues: { perseverance: 1 }
+                                },
+                                result: "你的身体机能逐渐下降，但心态平和。"
+                            },
+                            {
+                                text: "感到沮丧，放弃锻炼",
+                                effects: {
+                                    virtues: { perseverance: -3 }
+                                },
+                                result: "你的身体状况恶化，生活变得更加不便。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "子女远离",
+                        description: "你的子女因为工作或生活原因，搬到了远方居住，很少有时间回来看望你。",
+                        imageUrl: "https://picsum.photos/seed/children/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "理解子女的选择，鼓励他们追求自己的生活",
+                                effects: {
+                                    virtues: { kindness: 5, wisdom: 4 },
+                                    filial: 5 // 开明的态度会让子女感激
+                                },
+                                result: "你和子女的关系保持良好，他们经常通过电话和视频与你联系。"
+                            },
+                            {
+                                text: "感到孤独，但不抱怨",
+                                effects: {
+                                    virtues: { kindness: 2 }
+                                },
+                                result: "你默默承受着孤独，子女感到有些愧疚。"
+                            },
+                            {
+                                text: "抱怨子女不孝顺，经常责备他们",
+                                effects: {
+                                    virtues: { kindness: -3 },
+                                    filial: -5 // 抱怨会让子女压力很大
+                                },
+                                result: "你和子女的关系变得紧张，他们减少了与你的联系。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "社会角色转变",
+                        description: "退休后，你不再担任原来的工作角色，感到有些失落和迷茫。",
+                        imageUrl: "https://picsum.photos/seed/role/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "发展新的兴趣爱好，参与社区活动",
+                                effects: {
+                                    virtues: { courage: 5, wisdom: 4 },
+                                    filial: 3 // 积极生活让子女放心
+                                },
+                                result: "你找到了新的生活乐趣，结识了新朋友，生活充实而有意义。"
+                            },
+                            {
+                                text: "在家休息，偶尔参加一些活动",
+                                effects: {
+                                    virtues: { courage: 2 }
+                                },
+                                result: "你的生活平淡但安逸，没有太多压力。"
+                            },
+                            {
+                                text: "感到无聊和无用，很少出门",
+                                effects: {
+                                    virtues: { courage: -2, perseverance: -1 }
+                                },
+                                result: "你逐渐与社会脱节，感到孤独和沮丧。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "财富管理",
+                        description: "你需要管理自己的积蓄，确保晚年生活有足够的经济保障。",
+                        imageUrl: "https://picsum.photos/seed/wealth/800/400",
+                        type: "responsibility",
+                        choices: [
+                            {
+                                text: "制定合理的理财计划，谨慎投资",
+                                effects: {
+                                    virtues: { wisdom: 5, responsibility: 4 }
+                                },
+                                result: "你的积蓄得到了妥善管理，经济状况稳定。"
+                            },
+                            {
+                                text: "依靠子女提供经济支持",
+                                effects: {
+                                    virtues: { responsibility: -2 }
+                                },
+                                result: "你的经济压力减轻了，但可能会感到失去了独立性。"
+                            },
+                            {
+                                text: "随意花费，不考虑未来",
+                                effects: {
+                                    virtues: { responsibility: -5 }
+                                },
+                                result: "你的积蓄很快耗尽，晚年生活可能面临经济困难。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "回忆与遗产",
+                        description: "你开始思考自己的人生遗产，希望给子女和社会留下一些东西。",
+                        imageUrl: "https://picsum.photos/seed/legacy/800/400",
+                        type: "wisdom",
+                        choices: [
+                            {
+                                text: "记录自己的人生故事，与家人分享",
+                                effects: {
+                                    virtues: { wisdom: 5, kindness: 4 },
+                                    filial: 5 // 留下回忆会让子女珍惜
+                                },
+                                result: "你的人生故事成为了家族的宝贵财富，子女更加了解你。"
+                            },
+                            {
+                                text: "捐赠一部分财产给慈善事业",
+                                effects: {
+                                    virtues: { kindness: 5, responsibility: 4 }
+                                },
+                                result: "你帮助了需要帮助的人，感到很满足。"
+                            },
+                            {
+                                text: "不考虑这些，过好当下",
+                                effects: {
+                                    virtues: { wisdom: 1 }
+                                },
+                                result: "你享受着平静的生活，但可能会感到有些空虚。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "亲友离世",
+                        description: "你身边的一些亲友相继离世，这让你感到生命的脆弱和无常。",
+                        imageUrl: "https://picsum.photos/seed/death/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "接受生命的自然规律，珍惜当下",
+                                effects: {
+                                    virtues: { wisdom: 5, perseverance: 4 }
+                                },
+                                result: "你以平和的心态面对亲友的离去，更加珍惜自己的生活。"
+                            },
+                            {
+                                text: "感到悲伤，但努力调整自己",
+                                effects: {
+                                    virtues: { perseverance: 3 }
+                                },
+                                result: "你逐渐走出悲伤，但仍然会时常想起他们。"
+                            },
+                            {
+                                text: "陷入悲伤，无法自拔",
+                                effects: {
+                                    virtues: { perseverance: -3 }
+                                },
+                                result: "你的情绪低落，影响了自己的生活质量。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "与孙辈的关系",
+                        description: "你有了孙辈，希望与他们建立良好的关系。",
+                        imageUrl: "https://picsum.photos/seed/grandchildren/800/400",
+                        type: "kindness",
+                        choices: [
+                            {
+                                text: "主动参与孙辈的生活，分享人生经验",
+                                effects: {
+                                    virtues: { kindness: 5, wisdom: 4 },
+                                    filial: 5 // 与孙辈关系好会让子女高兴
+                                },
+                                result: "你和孙辈的关系非常亲密，他们很尊重你，喜欢听你讲故事。"
+                            },
+                            {
+                                text: "保持一定距离，尊重他们的生活",
+                                effects: {
+                                    virtues: { kindness: 2 }
+                                },
+                                result: "你和孙辈的关系比较平淡，但相处融洽。"
+                            },
+                            {
+                                text: "认为孙辈的教育是子女的责任，不干涉",
+                                effects: {
+                                    virtues: { kindness: -1 }
+                                },
+                                result: "你和孙辈的关系疏远，他们对你了解不多。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "兴趣爱好",
+                        description: "你有了更多的时间，可以发展自己的兴趣爱好。",
+                        imageUrl: "https://picsum.photos/seed/hobby/800/400",
+                        type: "wisdom",
+                        choices: [
+                            {
+                                text: "学习新技能，如绘画、书法、摄影等",
+                                effects: {
+                                    virtues: { wisdom: 5, courage: 4 }
+                                },
+                                result: "你发现了新的乐趣，丰富了自己的生活。"
+                            },
+                            {
+                                text: "继续以前的爱好，如读书、钓鱼、下棋等",
+                                effects: {
+                                    virtues: { wisdom: 3 }
+                                },
+                                result: "你享受着熟悉的乐趣，生活平静而满足。"
+                            },
+                            {
+                                text: "很少参与任何活动，大部分时间看电视或休息",
+                                effects: {
+                                    virtues: { wisdom: -1 }
+                                },
+                                result: "你的生活单调乏味，缺乏活力。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "健康问题",
+                        description: "你患上了一种严重的疾病，需要长期治疗和照顾。",
+                        imageUrl: "https://picsum.photos/seed/illness/800/400",
+                        type: "adversity",
+                        choices: [
+                            {
+                                text: "积极治疗，保持乐观心态",
+                                effects: {
+                                    virtues: { perseverance: 5, courage: 4 },
+                                    filial: 5 // 积极面对会让子女欣慰
+                                },
+                                result: "你的勇气和乐观感染了身边的人，生活质量得到了提高。"
+                            },
+                            {
+                                text: "接受治疗，但情绪低落",
+                                effects: {
+                                    virtues: { perseverance: 2 }
+                                },
+                                result: "你虽然接受了治疗，但心情不佳，影响了康复进度。"
+                            },
+                            {
+                                text: "拒绝治疗，选择安宁疗护",
+                                effects: {
+                                    virtues: { wisdom: 4 }
+                                },
+                                result: "你选择了平静地度过最后的时光，家人尊重你的决定。"
+                            }
+                        ]
+                    },
+                    {
+                        title: "人生总结",
+                        description: "你回顾自己的一生，思考自己是否过得充实，是否有遗憾。",
+                        imageUrl: "https://picsum.photos/seed/summary/800/400",
+                        type: "wisdom",
+                        choices: [
+                            {
+                                text: "接受自己的人生，包括所有的成功和失败",
+                                effects: {
+                                    virtues: { wisdom: 5 },
+                                    filial: 3 // 平和心态会让子女放心
+                                },
+                                result: "你感到内心平静，对自己的人生感到满意。"
+                            },
+                            {
+                                text: "感到遗憾，但尝试从中学习",
+                                effects: {
+                                    virtues: { wisdom: 3 }
+                                },
+                                result: "你从遗憾中吸取了教训，但仍然有些许遗憾。"
+                            },
+                            {
+                                text: "感到后悔和不满，对自己的人生感到失望",
+                                effects: {
+                                    virtues: { wisdom: -2 }
+                                },
+                                result: "你陷入了消极情绪，无法享受晚年生活。"
+                            }
+                        ]
+                    }
+                ];
+            }
+        }
+    </script>
+</body>
+</html>    
